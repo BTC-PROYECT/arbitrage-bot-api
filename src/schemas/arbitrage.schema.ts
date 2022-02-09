@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, ObjectId } from 'mongoose';
 
 export type ArbitrageDocument = Arbitrage & Document;
 
@@ -33,7 +33,10 @@ export class Arbitrage {
   arbitrage_oportunity_found: boolean;
 
   @Prop()
-  expected_profit: number
+  expected_profit: number;
+
+  @Prop()
+  createdAt: Date;
 }
 
 export const ArbitrageSchema = SchemaFactory.createForClass(Arbitrage);
