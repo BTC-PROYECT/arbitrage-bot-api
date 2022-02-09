@@ -6,7 +6,7 @@ import { Arbitrage, ArbitrageSchema } from './schemas/arbitrage.schema';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost/arbitrage-bot-api'), 
+    MongooseModule.forRoot('mongodb://mongodb:27017/arbitrage-bot-api'), 
     MongooseModule.forFeature([{ name: Arbitrage.name, schema: ArbitrageSchema }])
   ],
   controllers: [AppController],
