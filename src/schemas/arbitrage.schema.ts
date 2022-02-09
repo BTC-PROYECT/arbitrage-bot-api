@@ -23,10 +23,10 @@ export class Arbitrage {
   @Prop()
   trading_token: string;
 
-  @Prop({type: Exchange})
+  @Prop({ type: Exchange })
   exchange_1: Exchange;
 
-  @Prop({type: Exchange})
+  @Prop({ type: Exchange })
   exchange_2: Exchange;
 
   @Prop()

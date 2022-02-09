@@ -2,11 +2,16 @@ import { Controller, Get } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AppService } from './app.service';
+import { MonitoringService } from './monitoring/monitoring.service';
 import { Arbitrage, ArbitrageDocument } from './schemas/arbitrage.schema';
 
 @Controller()
 export class AppController {
-  constructor(@InjectModel(Arbitrage.name) private arbitrageModel: Model<ArbitrageDocument>, private readonly appService: AppService) {}
+  constructor(
+    @InjectModel(Arbitrage.name)
+    private arbitrageModel: Model<ArbitrageDocument>,
+    private readonly monitoringService: MonitoringService,
+  ) {}
 
   @Get()
   async insertArbitrage() {
@@ -15,22 +20,24 @@ export class AppController {
       pairAddress: 'test',
       input_amount: '100',
       trading_token: 'BNB',
-      exchange_1: { 
+      exchange_1: {
         name: 'pankakeswap',
         token_in: '100',
-        token_out: '1000'
+        token_out: '1000',
       },
       exchange_2: {
         name: 'pankakeswap',
         token_in: '100',
-        token_out: '1000'
+        token_out: '1000',
       },
       arbitrage_oportunity_found: true,
       expected_profit: '10',
-      createdAt: new Date().toISOString()
-    }
+      createdAt: new Date().toISOString(),
+    };
 
     const createdArbitrage = new this.arbitrageModel(arbitrage);
+
+    this.monitoringService.start();
 
     return createdArbitrage.save();
   }
