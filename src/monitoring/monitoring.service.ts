@@ -1,12 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import Web3 from 'web3';
-import BigNumber from 'big-number';
+import BigNumber from 'bignumber.js';
 import abis from '../configuration/abis';
 import addresses from '../configuration/addresses';
 import erc20 from '../configuration/abis/erc20.json';
+import { Arbitrage, ArbitrageDocument } from 'src/schemas/arbitrage.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class MonitoringService {
+  constructor(
+    @InjectModel(Arbitrage.name)
+    private arbitrageModel: Model<ArbitrageDocument>,
+  ) {}
+
   async start() {
     const web3 = new Web3(
       new Web3.providers.WebsocketProvider(process.env.BSC_WSS),
@@ -51,19 +59,13 @@ export class MonitoringService {
     ];
     const fromTokenDecimals = [18];
 
-    const toTokens = ['USDC'];
+    const toTokens = ['BUSD', 'USDC'];
     const toToken = [
+      '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', // BUSD
       '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', // USDC
     ];
-    const toTokenDecimals = [18];
-
-    //TODO refactory error with types
-    const erc20ABI: any = erc20;
-
-    // we need ERC20 ABI
-    const usdcToken = new web3.eth.Contract(erc20ABI, toToken[0]);
-
-    const amount = process.env.TEST_AMOUNT;
+    const toTokenDecimals = [18, 18];
+    const amount = process.env.BNB_AMOUNT;
 
     const networkId = await web3.eth.net.getId();
 
@@ -157,7 +159,9 @@ export class MonitoringService {
             // not consider transaction cost in here
             console.log(`Profit in ${fromTokens[i]}: ${unit3.toString()}`);
 
-            if (profit > 0) {
+            const arbitrageOportunityFound = profit.gt(0);
+
+            if (arbitrageOportunityFound) {
               console.log(`
                         Block # ${block.number}: Arbitrage opportunity found!
                         Expected profit: ${unit3.toString()} in ${fromTokens[i]}
@@ -170,6 +174,52 @@ export class MonitoringService {
                         Expected profit: ${unit3.toString()} in ${fromTokens[i]}
                     `);
             }
+
+            const arbitrage = {
+              block: {
+                number: block.number,
+                gasLimit: block.gasLimit,
+                timestamp: block.timestamp,
+              },
+              pair: `${toTokens[j]}/${fromTokens[i]}`,
+              pairAddress: pairAddress,
+              tradingToken: {
+                amount: unit0,
+                token: fromTokens[i],
+              },
+              exchange1: {
+                name: 'PancakeSwap DEX',
+                tokenIn: {
+                  amount: unit0,
+                  token: fromTokens[i],
+                },
+                tokenOut: {
+                  amount: unit1,
+                  token: toTokens[j],
+                },
+              },
+              exchange2: {
+                name: 'BakerySwap DEX',
+                tokenIn: {
+                  amount: unit1,
+                  token: toTokens[j],
+                },
+                tokenOut: {
+                  amount: unit2,
+                  token: fromTokens[i],
+                },
+              },
+              arbitrageOportunityFound: arbitrageOportunityFound,
+              expectedProfit: {
+                amount: unit3,
+                token: fromTokens[i],
+              },
+              createdAt: new Date().toISOString(),
+            };
+
+            const createdArbitrage = new this.arbitrageModel(arbitrage);
+
+            return createdArbitrage.save();
           }
         }
       })

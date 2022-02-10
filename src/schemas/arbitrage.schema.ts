@@ -5,35 +5,46 @@ export type ArbitrageDocument = Arbitrage & Document;
 
 export class Exchange {
   name: string;
-  token_in: string;
-  token_out: string;
+  tokenIn: Token;
+  tokenOut: Token;
+}
+
+export class Block {
+  number: string;
+  gasLimit: string;
+  timestamp: string;
+}
+
+export class Token {
+  amount: number;
+  token: string;
 }
 
 @Schema()
 export class Arbitrage {
+  @Prop({ type: Block })
+  block: Block;
+
   @Prop()
   pair: string;
 
   @Prop()
   pairAddress: string;
 
-  @Prop()
-  input_amount: number;
-
-  @Prop()
-  trading_token: string;
+  @Prop({ type: Token })
+  tradingToken: Token;
 
   @Prop({ type: Exchange })
-  exchange_1: Exchange;
+  exchange1: Exchange;
 
   @Prop({ type: Exchange })
-  exchange_2: Exchange;
+  exchange2: Exchange;
 
   @Prop()
-  arbitrage_oportunity_found: boolean;
+  arbitrageOportunityFound: boolean;
 
-  @Prop()
-  expected_profit: number;
+  @Prop({ type: Token })
+  expectedProfit: Token;
 
   @Prop()
   createdAt: Date;
